@@ -1,6 +1,9 @@
 *.bin
 models/
-data/
+cs336_alignment/data/
+cs336_alignment/logs/
+cs336_alignment/sft_results/
+wandb/
 
 nav
 tags
