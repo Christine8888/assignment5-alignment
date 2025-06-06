@@ -68,6 +68,7 @@ def compute_metrics(results: List[dict], printout = True):
     n_correct = sum(1 for result in results if result["answer_reward"] == 1.0 and result["format_reward"] == 1.0)
     n_total = len(results)
     n_format_only = sum(1 for result in results if result["answer_reward"] == 0.0 and result["format_reward"] == 1.0)
+    n_format = sum(1 for result in results if result["format_reward"] == 1.0)
     n_wrong = sum(1 for result in results if result["answer_reward"] == 0.0 and result["format_reward"] == 0.0)
 
     # print 10 wrong examples
@@ -96,9 +97,10 @@ def compute_metrics(results: List[dict], printout = True):
     print('MATH results:\n')
     print(f'Completely correct: {(n_correct / n_total):.3f}')
     print(f'Format only: {(n_format_only / n_total):.3f}')
+    print(f'Format: {(n_format / n_total):.3f}')
     print(f'Wrong: {(n_wrong / n_total):.3f}')
     
-    return n_correct / n_total, n_format_only / n_total, wrong_count / n_total
+    return n_correct / n_total, n_format / n_total, wrong_count / n_total
 
 if __name__ == "__main__":
     # sampling setup

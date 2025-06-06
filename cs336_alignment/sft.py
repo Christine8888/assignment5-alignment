@@ -9,11 +9,7 @@ import cs336_alignment.utils as utils
 import random
 from unittest.mock import patch
 from typing import List, Callable
-
-QWEN_25 = "/data/a5-alignment/models/Qwen2.5-Math-1.5B"
-PROMPT_PATH = './prompts/r1_zero.prompt'
-MATH_TRAIN_PATH = '/data/a5-alignment/MATH/sft.jsonl'
-MATH_VAL_PATH = '/data/a5-alignment/MATH/validation.jsonl'
+from cs336_alignment.info import *
 
 def init_vllm(model_id: str, device: str, seed: int, gpu_memory_utilization: float = 0.85):
     """
@@ -52,31 +48,20 @@ def load_policy_into_vllm_instance(policy: PreTrainedModel, llm: LLM):
     llm_model = llm.llm_engine.model_executor.driver_worker.model_runner.model
     llm_model.load_weights(state_dict.items())
 
-def wandb_setup():
-    """
-    Set up wandb folders and x-axis metrics
-    """
-    wandb.define_metric("train_step") # the x‑axis for training
-    wandb.define_metric("eval_step") # the x‑axis for evaluation
-    # everything that starts with train/ is tied to train_step
-    wandb.define_metric("train/*", step_metric="train_step")
-    # everything that starts with eval/ is tied to eval_step
-    wandb.define_metric("eval/*", step_metric="eval_step")
-
-def do_rollouts(prompts, vllm_model, train_sampling_params, n_rollouts = 1):
-    prompts = [[prompt] * n_rollouts for prompt in prompts]
-    responses = vllm_model.generate(prompts, train_sampling_params)
-    return [r.outputs[0].text for r in responses], prompts
-
-def train_setup(model_string: str, seed: int = 42, learning_rate: float = 1e-4, vllm_device: str = 'cuda:0', model_device: str = 'cuda:1'):
+def train_setup(model_string: str, 
+                seed: int = 42, 
+                learning_rate: float = 1e-4, 
+                vllm_device: str = 'cuda', 
+                model_device: str = 'cuda') -> tuple[LLM, PreTrainedModel, PreTrainedTokenizer, torch.optim.Optimizer]:
+    
     # initialize vllm onto 1st GPU
     print("Initializing vllm...")
-    vllm_model = init_vllm(model_string, device = vllm_device, seed = seed)
+    vllm_model = init_vllm(model_string, device = vllm_device, seed = seed, gpu_memory_utilization=0.2)
 
     # load model and tokenizer onto 1st GPU
     print("Loading model and tokenizer...")
     model = AutoModelForCausalLM.from_pretrained(
-        QWEN_25,
+        model_string,
         torch_dtype=torch.bfloat16,
         attn_implementation="flash_attention_2",
         device_map = model_device
@@ -92,7 +77,13 @@ def train_setup(model_string: str, seed: int = 42, learning_rate: float = 1e-4, 
 
     return vllm_model, model, tokenizer, optimizer
 
-def full_train_step(prompts: List[str], answers: List[str], tokenizer: PreTrainedTokenizer, model: PreTrainedModel, gradient_accumulation_steps: int, do_backward: bool = True, device: str = 'cuda:1'):
+def full_train_step(prompts: List[str], 
+                    answers: List[str], 
+                    tokenizer: PreTrainedTokenizer, 
+                    model: PreTrainedModel, 
+                    gradient_accumulation_steps: int, 
+                    do_backward: bool = True, 
+                    device: str = 'cuda:0') -> tuple[float, float]:
     """
     Do a full SFT training step from prompts/answers
     """
@@ -129,13 +120,13 @@ def evaluate_loss(prompts: List[str], answers: List[str], tokenizer: PreTrainedT
             minibatch_prompts = prompts[i:i+minibatch_size]
             minibatch_answers = answers[i:i+minibatch_size]
             
-            loss, avg_entropy = full_train_step(minibatch_prompts, 
+            loss, entropy = full_train_step(minibatch_prompts, 
                             minibatch_answers, 
                             tokenizer, model, 
                             gradient_accumulation_steps = 1, 
                             do_backward = False)
             avg_loss += loss.item()
-            avg_entropy += avg_entropy
+            avg_entropy += entropy
     
     model.train()
     
@@ -145,7 +136,7 @@ def evaluate_loss(prompts: List[str], answers: List[str], tokenizer: PreTrainedT
 
     return avg_loss, avg_entropy
 
-def evaluate(prompts: List[str], answers: List[str], tokenizer: PreTrainedTokenizer, vllm_model: LLM, minibatch_size: int, eval_sampling_params: SamplingParams, reward_fn: Callable[[str, str], dict[str, float]]):
+def evaluate(prompts: List[str], answers: List[str], vllm_model: LLM, eval_sampling_params: SamplingParams, reward_fn: Callable[[str, str], dict[str, float]]):
     """
     Evaluate the model on a set of prompts/answers
     """
@@ -167,42 +158,77 @@ def load_SFT(path: str):
     
     return [d["prompt"] for d in data], [d["response"] for d in data], [d["ground_truth"] for d in data]
 
-def train_run(model_string: str, 
-              n_unique: int = None, 
-              n_epochs: int = 10, 
-              minibatch_size = 32, 
-              batch_size: int = 128, 
-              learning_rate: float = 1e-4,
-              log_every_n: int = 100,
-              eval_every_n: int = 100,
+def train_run(config: dict,
               eval_sampling_params: SamplingParams = None,
-              seed: int = 42):
+              end_eval: bool = True):
+    
     vllm_device = 'cuda:0'
-    model_device = 'cuda:1'
+    model_device = 'cuda:0'
 
     # do training setup
-    vllm_model, model, tokenizer, optimizer = train_setup(model_string, seed, learning_rate, vllm_device, model_device)
+    vllm_model, model, tokenizer, optimizer = train_setup(config['model'], config['seed'], config['learning_rate'], vllm_device, model_device)
 
     # load training and validation sets
     print("Loading training and validation sets...")
-    train_prompts, train_responses, train_ground_truths = load_SFT(MATH_TRAIN_PATH)
+    train_prompts, train_responses, train_ground_truths = load_SFT(config['train_path'])
+    print(f"Loaded {len(train_prompts)} training examples")
 
     # sample subset of unique prompts to use
-    if n_unique: # use random sample of unique prompts
-        train_idxs = random.sample(range(len(train_prompts)), n_unique)
+    if config['n_unique']: # use random sample of unique prompts
+        train_idxs = random.sample(range(len(train_prompts)), config['n_unique'])
         train_prompts = [train_prompts[i] for i in train_idxs]
         train_responses = [train_responses[i] for i in train_idxs]
         train_ground_truths = [train_ground_truths[i] for i in train_idxs]
     
-    val_questions, val_answers = baseline.load_MATH(MATH_VAL_PATH)
+    val_questions, val_answers = baseline.load_MATH(config['val_path'])
     val_prompts = baseline.make_prompts(val_questions)
 
     # run SFT training
+    train_sft(train_prompts = train_prompts, 
+            train_responses = train_responses, 
+            train_ground_truths = train_ground_truths, 
+            val_prompts = val_prompts, 
+            val_answers = val_answers, 
+            vllm_model = vllm_model, 
+            model = model, 
+            model_device = model_device, 
+            optimizer = optimizer, 
+            tokenizer = tokenizer, 
+            eval_sampling_params = eval_sampling_params, 
+            config = config,
+            start_train_step = config['start_train_step'],
+            end_eval = end_eval)
+
+def train_sft(train_prompts: List[str], 
+            train_responses: List[str], 
+            train_ground_truths: List[str], 
+            val_prompts: List[str], 
+            val_answers: List[str], 
+            vllm_model: LLM, 
+            model: PreTrainedModel, 
+            model_device: str,
+            optimizer: torch.optim.Optimizer, 
+            tokenizer: PreTrainedTokenizer, 
+            eval_sampling_params: SamplingParams,
+            config: dict,
+            start_train_step: int = 0,
+            end_eval: bool = True):
+    
+    minibatch_size = config['minibatch_size']
+    batch_size = config['train_batch_size']
+    n_epochs = config['n_epochs']
+    log_every_n = config['log_every_n']
+    eval_every_n = config['eval_every_n']
+    n_unique = config['n_unique']
+    learning_rate = config['learning_rate']
+    
     print("Running SFT training...")
     gradient_accumulation_steps = batch_size // minibatch_size
-    n_minibatches = len(train_prompts) // minibatch_size
-    train_step = 0
-    eval_step = 0
+    n_minibatches = len(train_prompts) // config['minibatch_size']
+    train_step = start_train_step
+    mini_train_step = 0
+    log_train = True 
+    log_eval = True
     
     print(f"Training for {n_epochs} epochs...")
     for epoch in range(n_epochs):
@@ -215,6 +241,8 @@ def train_run(model_string: str,
         
         # run training steps
         n_minibatches = len(train_prompts) // minibatch_size
+        print(f'Training on {len(train_indices)} examples in {n_minibatches} minibatches')
+        
         for minibatch_idx in range(n_minibatches):
             minibatch_prompts = train_prompts[minibatch_idx * minibatch_size:(minibatch_idx + 1) * minibatch_size]
             minibatch_responses = train_responses[minibatch_idx * minibatch_size:(minibatch_idx + 1) * minibatch_size]
@@ -227,40 +255,54 @@ def train_run(model_string: str,
                             device = model_device)
             
             # backwards pass
-            if (train_step + 1) % gradient_accumulation_steps == 0:
+            if (mini_train_step + 1) % gradient_accumulation_steps == 0:
                 # do gradient clipping
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
 
                 # perform gradient descent once accumulated
                 optimizer.step()
                 optimizer.zero_grad()
+                train_step += 1
+
+                print("Train step: ", train_step)
+                if train_step % log_every_n == 0:
+                    log_train = True
+                if train_step % eval_every_n == 0:
+                    log_eval = True
             
             # logging
-            if (train_step + 1) % log_every_n == 0:
+            if log_train:
+                log_train = False
                 wandb.log({
                     "train/loss": loss_val,
                     "train/avg_entropy": avg_entropy,
-                    "train_step": train_step,
-                })
+                }, step = train_step)
 
-            if (train_step + 1) % eval_every_n == 0:
-                # select random batch eval prompts/answers
-                val_batch_indices = random.sample(range(len(val_prompts)), batch_size * 8)
-                val_batch_prompts = [val_prompts[i] for i in val_batch_indices]
+            if log_eval:
+                multiplier = 2
+                log_eval = False
+                print("Training step: ", train_step)
+                print(f"Evaluating on {batch_size * multiplier} prompts...")
+
+                # load policy into vllm
+                print("Loading policy into vllm...")
+                load_policy_into_vllm_instance(model, vllm_model)
+
+                # select random double-batch of eval prompts/answers
+                val_batch_indices = random.sample(range(len(val_prompts)), batch_size * multiplier)
+                val_batch_prompts = [val_prompts[i] for i in val_batch_indices] 
                 val_batch_answers = [val_answers[i] for i in val_batch_indices]
 
-                correct_fraction, format_only_fraction = evaluate(prompts = val_batch_prompts, 
+                correct_fraction, format_fraction = evaluate(prompts = val_batch_prompts, 
                                                                    answers = val_batch_answers, 
-                                                                   tokenizer = tokenizer, 
                                                                    vllm_model = vllm_model, 
-                                                                   minibatch_size = minibatch_size, 
                                                                    eval_sampling_params = eval_sampling_params, 
                                                                    reward_fn = baseline.r1_zero_reward_fn)
+                print('Logging metrics to wandb...')
                 wandb.log({
                     "eval/correct": correct_fraction,
-                    "eval/format_only": format_only_fraction,
-                    "eval_step": train_step,
-                })
+                    "eval/format": format_fraction,
+                }, step = train_step)
 
                 log_indices = random.sample(range(len(val_prompts)), minibatch_size)
                 log_prompts = [val_prompts[i] for i in log_indices]
@@ -273,24 +315,43 @@ def train_run(model_string: str,
                                         sampling_params = eval_sampling_params,
                                         log_file = f'sft_results/sft_{n_unique}_{batch_size}_{minibatch_size}_{learning_rate}.txt')
                 
-                eval_step += 1
-
-            train_step += 1
-        
-        # load policy into vllm
-        load_policy_into_vllm_instance(model, vllm_model)
+            mini_train_step += 1
+    
+    remaining_steps = gradient_accumulation_steps - (mini_train_step % gradient_accumulation_steps)
+    print(f"Remaining steps: {remaining_steps}")
+    if remaining_steps > (gradient_accumulation_steps // 2):
+        print("Performing partial gradient update...")
+        torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+        optimizer.zero_grad()
+        train_step += 1
+    else:
+        print("Not performing gradient update...")
+        optimizer.zero_grad()
 
     print("Training complete!")
+    load_policy_into_vllm_instance(model, vllm_model) # load policy into vllm
+
     # do full val set evaluation
-    print("Evaluating on full validation set...")
-    baseline.evaluate_vllm(vllm_model, 
-                           baseline.r1_zero_reward_fn, 
-                           val_prompts, 
-                           val_answers, 
-                           eval_sampling_params, 
-                           save_path = f'sft_results/sft_{n_unique}_{batch_size}_{minibatch_size}_{learning_rate}.jsonl')
+    if end_eval:
+        print("Evaluating on full validation set...")
+        correct_fraction, format_fraction = evaluate(prompts = val_prompts, 
+                                                                answers = val_answers, 
+                                                                vllm_model = vllm_model, 
+                                                                eval_sampling_params = eval_sampling_params, 
+                                                                reward_fn = baseline.r1_zero_reward_fn)
+        print('Logging metrics to wandb...')
+        wandb.log({
+            "eval/correct": correct_fraction,
+            "eval/format": format_fraction,
+        }, step = train_step)
+
+    return train_step
     
 if __name__ == "__main__":
+    train_path = "./filtered_train.jsonl"
+    n_examples_full = sum(1 for _ in open(train_path, 'r'))
+
     eval_sampling_params = SamplingParams(
         temperature = 1.0, 
         top_p = 1.0, 
@@ -298,23 +359,28 @@ if __name__ == "__main__":
         stop = ["</answer>"], 
         include_stop_str_in_output = True,
     )
+    n_steps = 64
     config = {
         "model": QWEN_25,
         "n_unique": None,
-        "n_epochs": 10,
-        "minibatch_size": 16, # 32 causes OOM
+        "minibatch_size": 8,
         "train_batch_size": 128,
-        "val_batch_size": 128,
         "learning_rate": 1e-4,
+        "seed": 42,
+        "log_every_n": 10,
+        "eval_every_n": 20,
+        "train_path": train_path,
+        "val_path": MATH_VAL_PATH,
     }
-    wandb.init(project = "cs336-alignment", name = f"sft_{config['n_unique']}_{config['minibatch_size']}_{config['train_batch_size']}_{config['learning_rate']}", config = config)
-    wandb_setup()
-    train_run(model_string = config['model'],
-              n_unique = config['n_unique'],
-              n_epochs = config['n_epochs'],
-              minibatch_size = config['minibatch_size'],
-              batch_size = config['train_batch_size'],
-              learning_rate = config['learning_rate'],
-              log_every_n = 10,
-              eval_every_n = 20,
-              eval_sampling_params = eval_sampling_params)
+    if config['n_unique'] is None:
+        config['n_unique'] = n_examples_full
+    
+    config['n_epochs'] = n_steps // (config['n_unique'] // config['train_batch_size'])
+
+    wandb.init(project = "cs336-alignment-sft", 
+               name = f"filtered_sft_{config['n_unique']}_{config['train_batch_size']}_{config['learning_rate']}", 
+               config = config)
+    
+    train_run(config = config,
+              eval_sampling_params = eval_sampling_params,
+              end_eval = True)

@@ -5,12 +5,14 @@ from vllm import SamplingParams
 import wandb
 import math
 
-N_SFT_STEPS = 512
+N_SFT_STEPS = 64
 QWEN_25 = "/data/a5-alignment/models/Qwen2.5-Math-1.5B"
-BATCH_SIZES = [32, 64, 128, 256]
-LRS = [1e-3, 3e-4, 1e-4, 3e-5, 1e-5]
-N_UNIQUE = [128, 256, 512, 1024, None]
-MINIBATCH_SIZE = 16 # fixed
+MATH_SFT_PATH = "/data/a5-alignment/MATH/sft.jsonl"
+MATH_VAL_PATH = "/data/a5-alignment/MATH/validation.jsonl"
+BATCH_SIZES = [256]
+LRS = [1e-4]
+N_UNIQUE = [512]
+MINIBATCH_SIZE = 8 # fixed
 
 EVAL_SAMPLING_PARAMS = SamplingParams(
         temperature = 1.0, 
@@ -18,28 +20,25 @@ EVAL_SAMPLING_PARAMS = SamplingParams(
         max_tokens = 1024, 
         stop = ["</answer>"], 
         include_stop_str_in_output = True,
+        min_tokens = 4,
     )
 
 def run_sft(config):
-    wandb.init(project = "cs336-alignment", name = f"sft_{config['n_unique']}_{config['minibatch_size']}_{config['train_batch_size']}_{config['learning_rate']}", config = config)
-    wandb_setup()
-    train_run(model_string = config['model'],
-              n_unique = config['n_unique'],
-              n_epochs = config['n_epochs'],
-              minibatch_size = config['minibatch_size'],
-              batch_size = config['train_batch_size'],
-              learning_rate = config['learning_rate'],
-              log_every_n = 10,
-              eval_every_n = 20,
-              eval_sampling_params = EVAL_SAMPLING_PARAMS)
+    wandb.init(project = "cs336-alignment-sft", name = f"sft_{config['n_unique']}_{config['minibatch_size']}_{config['train_batch_size']}_{config['learning_rate']}", config = config)
+    train_run(config = config,
+              eval_sampling_params = EVAL_SAMPLING_PARAMS,
+              end_eval = True)
 
-def run_sft_task(task_id):
+def run_sft_task(task_id, train_path: str):
     """Run a single SFT task based on task_id (SLURM array index)"""
+    # get size of train path
+    n_examples_full = sum(1 for _ in open(train_path, 'r'))
+    
     configs = []
     for batch_size in BATCH_SIZES:
         for lr in LRS:
             for n_unique in N_UNIQUE:
-                if n_unique is None: n_examples = 1767
+                if n_unique is None: n_examples = n_examples_full
                 else: n_examples = n_unique
                 
                 # steps per epoch: examples / batch_size
@@ -54,7 +53,12 @@ def run_sft_task(task_id):
                     'n_epochs': n_epochs,
                     'minibatch_size': MINIBATCH_SIZE,
                     'train_batch_size': batch_size,
-                    'learning_rate': lr
+                    'learning_rate': lr,
+                    'train_path': train_path,
+                    'val_path': MATH_VAL_PATH,
+                    'seed': 42,
+                    'log_every_n': 10,
+                    'eval_every_n': 20,
                 }
                 configs.append(config)
     
@@ -70,7 +74,7 @@ if __name__ == "__main__":
     executor = submitit.AutoExecutor(folder="./logs")
     executor.update_parameters(
         timeout_min = 60,
-        slurm_gpus_per_node = 2,
+        slurm_gpus_per_node = 1,
         slurm_partition = "a5-batch",
         slurm_qos = "a5-batch-qos",
         slurm_nodes = 1, # only 1 node
@@ -79,7 +83,7 @@ if __name__ == "__main__":
     )
     
     # submit array job
-    jobs = executor.map_array(run_sft_task, range(total_configs))
+    jobs = executor.map_array(run_sft_task, range(total_configs), MATH_SFT_PATH)
     
     print(f"Submitted SLURM array job with {total_configs} tasks")
     print(f"Job IDs: {[job.job_id for job in jobs]}")
