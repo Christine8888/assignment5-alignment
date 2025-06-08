@@ -3,14 +3,7 @@ from cs336_alignment.drgrpo_grader import r1_zero_reward_fn
 import argparse
 from typing import Callable, List
 import json
-
-QWEN_25 = "/data/a5-alignment/models/Qwen2.5-Math-1.5B"
-PROMPT_PATH = './prompts/r1_zero.prompt'
-MATH_VAL_PATH = '/data/a5-alignment/MATH/validation.jsonl'
-
-with open(PROMPT_PATH, 'r') as f:
-    PROMPT_TXT = f.read()
-    print(PROMPT_TXT)
+from cs336_alignment.info import *
 
 def evaluate_vllm(
         vllm_model: LLM,
@@ -44,9 +37,9 @@ def evaluate_vllm(
         })
     
     if save_path is not None:
-        with open(save_path, 'w') as f:
+        with open(save_path, 'a') as f:
             # save json list of dicts
-            json.dump(results, f)
+            json.dump(results, f, indent = 2)
     
     return results
 
@@ -56,10 +49,13 @@ def load_MATH(path: str):
     
     return [d["problem"] for d in data], [d["answer"] for d in data]
 
-def make_prompts(questions: List[str]):
+def make_prompts(questions: List[str], prompt_path = PROMPT_PATH):
+    with open(prompt_path, 'r') as f:
+        prompt_txt = f.read()
+
     prompts = []
     for question in questions:
-        prompts.append(PROMPT_TXT.format(question = question))
+        prompts.append(prompt_txt.format(question = question))
     
     return prompts
 

@@ -1,5 +1,6 @@
 import submitit
 from cs336_alignment.iter import run_iter
+from cs336_alignment.sft import wandb_setup
 import wandb
 from cs336_alignment.info import *
 
@@ -13,6 +14,7 @@ def iter(config, train_path: str):
     wandb.init(project = "cs336-alignment-iter", 
                name = f"iter_{config['n_epochs']}_{config['n_rollouts']}_{config['iter_batch_size']}", 
                config = config)
+    wandb_setup()
     
     run_iter(config = config, 
              sampling_params = EVAL_SAMPLING_PARAMS, 

@@ -25,6 +25,7 @@ EVAL_SAMPLING_PARAMS = SamplingParams(
 
 def run_sft(config):
     wandb.init(project = "cs336-alignment-sft", name = f"sft_{config['n_unique']}_{config['minibatch_size']}_{config['train_batch_size']}_{config['learning_rate']}", config = config)
+    wandb_setup()
     train_run(config = config,
               eval_sampling_params = EVAL_SAMPLING_PARAMS,
               end_eval = True)

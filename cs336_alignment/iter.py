@@ -104,7 +104,8 @@ def iterate(config: dict,
         "iter/eval_correct": correct_fraction,
         "iter/eval_format": format_fraction,
         "iter/n_sft": len(filtered_prompts),
-    }, step = iter)
+        "iter": iter,
+    })
 
     return train_step
 

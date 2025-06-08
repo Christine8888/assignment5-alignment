@@ -50,13 +50,13 @@ def load_policy_into_vllm_instance(policy: PreTrainedModel, llm: LLM):
 
 def train_setup(model_string: str, 
                 seed: int = 42, 
-                learning_rate: float = 1e-4, 
                 vllm_device: str = 'cuda', 
-                model_device: str = 'cuda') -> tuple[LLM, PreTrainedModel, PreTrainedTokenizer, torch.optim.Optimizer]:
+                model_device: str = 'cuda',
+                gpu_memory_utilization: float = 0.2) -> tuple[LLM, PreTrainedModel, PreTrainedTokenizer, torch.optim.Optimizer]:
     
     # initialize vllm onto 1st GPU
     print("Initializing vllm...")
-    vllm_model = init_vllm(model_string, device = vllm_device, seed = seed, gpu_memory_utilization=0.2)
+    vllm_model = init_vllm(model_string, device = vllm_device, seed = seed, gpu_memory_utilization=gpu_memory_utilization)
 
     # load model and tokenizer onto 1st GPU
     print("Loading model and tokenizer...")
@@ -69,13 +69,12 @@ def train_setup(model_string: str,
 
     # get tokenizer, optimizer
     tokenizer = AutoTokenizer.from_pretrained(model_string)
-    optimizer = torch.optim.AdamW(model.parameters(), lr = learning_rate)
 
     # load policy into vllm
     print("Loading policy into vllm...")
     load_policy_into_vllm_instance(model, vllm_model)
 
-    return vllm_model, model, tokenizer, optimizer
+    return vllm_model, model, tokenizer
 
 def full_train_step(prompts: List[str], 
                     answers: List[str], 
@@ -136,7 +135,11 @@ def evaluate_loss(prompts: List[str], answers: List[str], tokenizer: PreTrainedT
 
     return avg_loss, avg_entropy
 
-def evaluate(prompts: List[str], answers: List[str], vllm_model: LLM, eval_sampling_params: SamplingParams, reward_fn: Callable[[str, str], dict[str, float]]):
+def evaluate(prompts: List[str], 
+             answers: List[str], 
+             vllm_model: LLM, 
+             eval_sampling_params: SamplingParams, 
+             reward_fn: Callable[[str, str], dict[str, float]]):
     """
     Evaluate the model on a set of prompts/answers
     """
@@ -166,7 +169,8 @@ def train_run(config: dict,
     model_device = 'cuda:0'
 
     # do training setup
-    vllm_model, model, tokenizer, optimizer = train_setup(config['model'], config['seed'], config['learning_rate'], vllm_device, model_device)
+    vllm_model, model, tokenizer = train_setup(config['model'], config['seed'], vllm_device, model_device)
+    optimizer = torch.optim.AdamW(model.parameters(), lr = config['learning_rate'])
 
     # load training and validation sets
     print("Loading training and validation sets...")
@@ -198,6 +202,17 @@ def train_run(config: dict,
             config = config,
             start_train_step = config['start_train_step'],
             end_eval = end_eval)
+
+def wandb_setup():
+    wandb.define_metric("train_step")  # x-axis for training and eval
+    wandb.define_metric("iter")        # x-axis for iteration-level metrics
+
+    # Both train/ and eval/ metrics use train_step as x-axis
+    wandb.define_metric("train/*", step_metric="train_step")
+    wandb.define_metric("eval/*", step_metric="train_step")  # Note: uses train_step, not eval_step
+
+    # iter/ metrics use iter as x-axis
+    wandb.define_metric("iter/*", step_metric="iter")
 
 def train_sft(train_prompts: List[str], 
             train_responses: List[str], 
@@ -276,12 +291,13 @@ def train_sft(train_prompts: List[str],
                 wandb.log({
                     "train/loss": loss_val,
                     "train/avg_entropy": avg_entropy,
-                }, step = train_step)
+                    "train_step": train_step,
+                })
 
             if log_eval:
                 multiplier = 2
                 log_eval = False
-                print("Training step: ", train_step)
+                print("Train step: ", train_step)
                 print(f"Evaluating on {batch_size * multiplier} prompts...")
 
                 # load policy into vllm
@@ -302,7 +318,8 @@ def train_sft(train_prompts: List[str],
                 wandb.log({
                     "eval/correct": correct_fraction,
                     "eval/format": format_fraction,
-                }, step = train_step)
+                    "train_step": train_step,
+                })
 
                 log_indices = random.sample(range(len(val_prompts)), minibatch_size)
                 log_prompts = [val_prompts[i] for i in log_indices]
@@ -317,9 +334,9 @@ def train_sft(train_prompts: List[str],
                 
             mini_train_step += 1
     
-    remaining_steps = gradient_accumulation_steps - (mini_train_step % gradient_accumulation_steps)
-    print(f"Remaining steps: {remaining_steps}")
-    if remaining_steps > (gradient_accumulation_steps // 2):
+    partial_step = (mini_train_step % gradient_accumulation_steps)
+    print(f"Partial gradient accumulation steps: {partial_step}")
+    if partial_step > (gradient_accumulation_steps // 2):
         print("Performing partial gradient update...")
         torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
         optimizer.step()
@@ -327,6 +344,7 @@ def train_sft(train_prompts: List[str],
         train_step += 1
     else:
         print("Not performing gradient update...")
+        # erase gradients
         optimizer.zero_grad()
 
     print("Training complete!")
@@ -380,6 +398,7 @@ if __name__ == "__main__":
     wandb.init(project = "cs336-alignment-sft", 
                name = f"filtered_sft_{config['n_unique']}_{config['train_batch_size']}_{config['learning_rate']}", 
                config = config)
+    wandb_setup()
     
     train_run(config = config,
               eval_sampling_params = eval_sampling_params,
