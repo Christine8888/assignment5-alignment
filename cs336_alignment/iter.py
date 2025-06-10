@@ -112,7 +112,11 @@ def iterate(config: dict,
 
 def run_iter(config, sampling_params, train_path = MATH_TRAIN_PATH, vllm_device = 'cuda', model_device = 'cuda'):
     # load model and tokenizer
-    vllm_model, model, tokenizer, optimizer = train_setup(config['model'], config['seed'], config['learning_rate'], vllm_device, model_device)
+    optimizer = torch.optim.AdamW(model.parameters(), 
+                                  lr = config['learning_rate'], 
+                                  weight_decay = config['weight_decay'], 
+                                  betas = config['betas'])
+    vllm_model, model, tokenizer = train_setup(config['model'], config['seed'], config['learning_rate'], vllm_device, model_device)
     
     # load validation and training data
     val_questions, val_answers = baseline.load_MATH(config['val_path'])

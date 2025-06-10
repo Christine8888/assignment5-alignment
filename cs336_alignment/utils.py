@@ -12,7 +12,7 @@ def tokenize_prompt_and_output(prompt_strs: List[str], output_strs: List[str], t
     tokenized_prompts = tokenizer(prompt_strs, return_tensors = None, padding = False, truncation = False)
     tokenized_outputs = tokenizer(output_strs, return_tensors = None, padding = False, truncation = False)
 
-    # 0: prompt length, 1: output length, 2: total length
+    # shape: batch_size, seq_len
     token_tensors = []
     attention_tensors = []
     for i in range(n_examples):
@@ -40,7 +40,7 @@ def compute_entropy(logits: torch.Tensor) -> torch.Tensor:
 def get_response_log_probs(model: PreTrainedModel,
                  input_ids: torch.Tensor,
                  labels: torch.Tensor,
-                 return_token_entropy: bool = False):
+                 return_token_entropy: bool = False) -> dict[str, torch.Tensor]:
     return_dict = {}
     logits = model(input_ids).logits # get logits for all next-tokens; batch_size x seq_len
     logprobs = F.log_softmax(logits, dim = -1)

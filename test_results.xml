@@ -1,0 +1,919 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="2" failures="7" skipped="0" tests="31" time="3.682" timestamp="2025-06-09T23:09:40.856037-07:00" hostname="ad12a3ca-hn01.cloud.together.ai"><testcase classname="tests.test_data" name="test_packed_sft_dataset" time="0.366"><failure message="NotImplementedError">def test_packed_sft_dataset():
+        sft_sample_path = FIXTURES_PATH / "sft_sample.jsonl"
+        tokenizer = AutoTokenizer.from_pretrained(FIXTURES_PATH / "Meta-Llama-3-8B")
+        seq_length = 32
+&gt;       packed_sft_dataset = get_packed_sft_dataset(
+            tokenizer=tokenizer,
+            dataset_path=sft_sample_path,
+            seq_length=seq_length,
+            shuffle=False,
+        )
+
+tests/test_data.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tokenizer = PreTrainedTokenizerFast(name_or_path='/home/c-cye/assignment5-alignment/tests/fixtures/Meta-Llama-3-8B', vocab_size=12...n("&lt;|reserved_special_token_250|&gt;", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+}
+)
+dataset_path = PosixPath('/home/c-cye/assignment5-alignment/tests/fixtures/sft_sample.jsonl'), seq_length = 32
+shuffle = False
+
+    def get_packed_sft_dataset(
+        tokenizer: PreTrainedTokenizerBase,
+        dataset_path: str | os.PathLike,
+        seq_length: int,
+        shuffle: bool,
+    ) -&gt; Dataset:
+        """
+        Given a tokenizer and a path to a dataset with instruction-tuning examples,
+        construct a PyTorch Dataset for language modeling. The examples should be
+        packed, i.e., all sequences in the dataset are of a constant length (`seq_length`).
+    
+        Args:
+            tokenizer: transformers.PreTrainedTokenizerBase
+                Transformers tokenizer to use in tokenizing and encoding text.
+            dataset_path: str
+                Path to file with instruction-tuning examples.
+            seq_length: int
+                Number of tokens to include in each example.
+            shuffle: bool
+                If true, shuffle the documents before packing them into examples.
+    
+        Returns:
+            PyTorch Dataset for language modeling. Each example in this dataset is a dictionary of
+            with keys "input_ids" and "labels" (both tensors of shape (seq_length, )).
+            "input_ids" contains the token IDs for the language modeling inputs, and "labels" contains
+            the token IDs for the language modeling labels.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:334: NotImplementedError</failure></testcase><testcase classname="tests.test_data" name="test_iterate_batches" time="0.353"><failure message="NotImplementedError">def test_iterate_batches():
+        sft_sample_path = FIXTURES_PATH / "sft_sample.jsonl"
+        tokenizer = AutoTokenizer.from_pretrained(FIXTURES_PATH / "Meta-Llama-3-8B")
+        seq_length = 32
+        batch_size = 8
+&gt;       packed_sft_dataset = get_packed_sft_dataset(
+            tokenizer=tokenizer,
+            dataset_path=sft_sample_path,
+            seq_length=seq_length,
+            shuffle=True,
+        )
+
+tests/test_data.py:60: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+tokenizer = PreTrainedTokenizerFast(name_or_path='/home/c-cye/assignment5-alignment/tests/fixtures/Meta-Llama-3-8B', vocab_size=12...n("&lt;|reserved_special_token_250|&gt;", rstrip=False, lstrip=False, single_word=False, normalized=False, special=True),
+}
+)
+dataset_path = PosixPath('/home/c-cye/assignment5-alignment/tests/fixtures/sft_sample.jsonl'), seq_length = 32
+shuffle = True
+
+    def get_packed_sft_dataset(
+        tokenizer: PreTrainedTokenizerBase,
+        dataset_path: str | os.PathLike,
+        seq_length: int,
+        shuffle: bool,
+    ) -&gt; Dataset:
+        """
+        Given a tokenizer and a path to a dataset with instruction-tuning examples,
+        construct a PyTorch Dataset for language modeling. The examples should be
+        packed, i.e., all sequences in the dataset are of a constant length (`seq_length`).
+    
+        Args:
+            tokenizer: transformers.PreTrainedTokenizerBase
+                Transformers tokenizer to use in tokenizing and encoding text.
+            dataset_path: str
+                Path to file with instruction-tuning examples.
+            seq_length: int
+                Number of tokens to include in each example.
+            shuffle: bool
+                If true, shuffle the documents before packing them into examples.
+    
+        Returns:
+            PyTorch Dataset for language modeling. Each example in this dataset is a dictionary of
+            with keys "input_ids" and "labels" (both tensors of shape (seq_length, )).
+            "input_ids" contains the token IDs for the language modeling inputs, and "labels" contains
+            the token IDs for the language modeling labels.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:334: NotImplementedError</failure></testcase><testcase classname="tests.test_dpo" name="test_per_instance_dpo_loss" time="0.550"><failure message="NotImplementedError">def test_per_instance_dpo_loss():
+        tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    
+        model = AutoModelForCausalLM.from_pretrained(FIXTURES_PATH / "tiny-gpt2")
+        model_ref = AutoModelForCausalLM.from_pretrained(FIXTURES_PATH / "tiny-gpt2-ref")
+    
+        prompt = "The quick brown fox jumps over"
+        good_response = "the lazy dog."
+        bad_response = "their crazy frog."
+    
+&gt;       loss = compute_per_instance_dpo_loss(
+            lm=model,
+            lm_ref=model_ref,
+            tokenizer=tokenizer,
+            beta=0.5,
+            prompt=prompt,
+            response_chosen=good_response,
+            response_rejected=bad_response,
+        )
+
+tests/test_dpo.py:18: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+lm = GPT2LMHeadModel(
+  (transformer): GPT2Model(
+    (wte): Embedding(50257, 128)
+    (wpe): Embedding(1024, 128)
+    (dro...((128,), eps=1e-05, elementwise_affine=True)
+  )
+  (lm_head): Linear(in_features=128, out_features=50257, bias=False)
+)
+lm_ref = GPT2LMHeadModel(
+  (transformer): GPT2Model(
+    (wte): Embedding(50257, 128)
+    (wpe): Embedding(1024, 128)
+    (dro...((128,), eps=1e-05, elementwise_affine=True)
+  )
+  (lm_head): Linear(in_features=128, out_features=50257, bias=False)
+)
+tokenizer = GPT2TokenizerFast(name_or_path='gpt2', vocab_size=50257, model_max_length=1024, is_fast=True, padding_side='right', tr...
+	50256: AddedToken("&lt;|endoftext|&gt;", rstrip=False, lstrip=False, single_word=False, normalized=True, special=True),
+}
+)
+beta = 0.5, prompt = 'The quick brown fox jumps over', response_chosen = 'the lazy dog.'
+response_rejected = 'their crazy frog.'
+
+    def run_compute_per_instance_dpo_loss(
+        lm: torch.nn.Module,
+        lm_ref: torch.nn.Module,
+        tokenizer: PreTrainedTokenizerBase,
+        beta: float,
+        prompt: str,
+        response_chosen: str,
+        response_rejected: str,
+    ) -&gt; torch.Tensor:
+        """
+        Given two language models (`lm`, and the "reference model" `lm_ref`),
+        their tokenizer, the DPO beta hyperparameter, a prompt and a pair
+        of responses to the prompt, computes the value of the DPO loss for this example.
+    
+        lm: torch.nn.Module
+            Language model being trained.
+        lm_ref: torch.nn.Module
+            Reference language model.
+        tokenizer: PreTrainedTokenizerBase
+            Tokenizer for both language models.
+        beta: float
+            DPO beta hyperparameter.
+        prompt: str
+            Prompt for this instance of preference pair.
+        response_chosen: str
+            Preferred response to the prompt.
+        response_rejected: str
+            Rejected response to the prompt.
+    
+        Returns:
+            torch.Tensor with the DPO loss for this example.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:435: NotImplementedError</failure></testcase><testcase classname="tests.test_grpo" name="test_compute_group_normalized_rewards_normalize_by_std" time="0.027" /><testcase classname="tests.test_grpo" name="test_compute_group_normalized_rewards_no_normalize_by_std" time="0.002" /><testcase classname="tests.test_grpo" name="test_compute_naive_policy_gradient_loss" time="0.003" /><testcase classname="tests.test_grpo" name="test_compute_grpo_clip_loss_large_cliprange" time="0.003" /><testcase classname="tests.test_grpo" name="test_compute_grpo_clip_loss_small_cliprange" time="0.002" /><testcase classname="tests.test_grpo" name="test_compute_policy_gradient_loss_no_baseline" time="0.002" /><testcase classname="tests.test_grpo" name="test_compute_policy_gradient_loss_reinforce_with_baseline" time="0.002" /><testcase classname="tests.test_grpo" name="test_compute_policy_gradient_loss_grpo_clip" time="0.002" /><testcase classname="tests.test_grpo" name="test_masked_mean_dim0" time="0.002" /><testcase classname="tests.test_grpo" name="test_masked_mean_dim1" time="0.002" /><testcase classname="tests.test_grpo" name="test_masked_mean_dimlast" time="0.002" /><testcase classname="tests.test_grpo" name="test_masked_mean_dimNone" time="0.002" /><testcase classname="tests.test_grpo" name="test_grpo_microbatch_train_step_grpo_clip" time="0.003" /><testcase classname="tests.test_grpo" name="test_grpo_microbatch_train_step_grpo_clip_10_steps" time="0.005" /><testcase classname="tests.test_metrics" name="test_parse_mmlu_response" time="0.000"><failure message="NotImplementedError">def test_parse_mmlu_response():
+        mmlu_example = {
+            "subject": "virology",
+            "question": "How many human polyomaviruses are known at present?",
+            "options": ["100", "1", "10", "unknown"],
+            "answer": "A",
+        }
+        model_output = (
+            "The correct answer is B. "
+            "There is only one human polyomavirus known at present, which is the BK virus."
+        )
+&gt;       parsed_response = run_parse_mmlu_response(
+            mmlu_example=mmlu_example, model_output=model_output
+        )
+
+tests/test_metrics.py:19: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mmlu_example = {'answer': 'A', 'options': ['100', '1', '10', 'unknown'], 'question': 'How many human polyomaviruses are known at present?', 'subject': 'virology'}
+model_output = 'The correct answer is B. There is only one human polyomavirus known at present, which is the BK virus.'
+
+    def run_parse_mmlu_response(
+        mmlu_example: dict[str, Any],
+        model_output: str,
+    ) -&gt; str | None:
+        """
+        Given an MMLU example and a model output, parse the model output into a
+        predicted option letter (i.e., 'A', 'B', 'C', or 'D'). If the model output
+        cannot be parsed into a prediction option letter, return None.
+    
+        mmlu_example: dict[str, Any]
+            Dictionary with an MMLU example. Contains the following keys:
+            - "subject": str with the subject of the question.
+            - "question": str with the text of the question.
+            - "options": list[str] with the four answer options (in order).
+                         The first option refers to letter "A", the second to "B", etc.
+            - "answer": str with the option of the correct answer (e.g., "A")
+        model_output: str
+            str with the model's output to the MMLU example.
+    
+        Returns:
+            str (one of "A", "B", "C", or "D") if the model output can be parsed into a prediction,
+            else None.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:383: NotImplementedError</failure></testcase><testcase classname="tests.test_metrics" name="test_parse_mmlu_response_unknown" time="0.000"><failure message="NotImplementedError">def test_parse_mmlu_response_unknown():
+        mmlu_example = {
+            "subject": "virology",
+            "question": "How many human polyomaviruses are known at present?",
+            "options": ["100", "1", "10", "unknown"],
+            "answer": "A",
+        }
+        model_output = "The correct answer is 10000 polyomaviruses."
+&gt;       parsed_response = run_parse_mmlu_response(
+            mmlu_example=mmlu_example, model_output=model_output
+        )
+
+tests/test_metrics.py:33: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+mmlu_example = {'answer': 'A', 'options': ['100', '1', '10', 'unknown'], 'question': 'How many human polyomaviruses are known at present?', 'subject': 'virology'}
+model_output = 'The correct answer is 10000 polyomaviruses.'
+
+    def run_parse_mmlu_response(
+        mmlu_example: dict[str, Any],
+        model_output: str,
+    ) -&gt; str | None:
+        """
+        Given an MMLU example and a model output, parse the model output into a
+        predicted option letter (i.e., 'A', 'B', 'C', or 'D'). If the model output
+        cannot be parsed into a prediction option letter, return None.
+    
+        mmlu_example: dict[str, Any]
+            Dictionary with an MMLU example. Contains the following keys:
+            - "subject": str with the subject of the question.
+            - "question": str with the text of the question.
+            - "options": list[str] with the four answer options (in order).
+                         The first option refers to letter "A", the second to "B", etc.
+            - "answer": str with the option of the correct answer (e.g., "A")
+        model_output: str
+            str with the model's output to the MMLU example.
+    
+        Returns:
+            str (one of "A", "B", "C", or "D") if the model output can be parsed into a prediction,
+            else None.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:383: NotImplementedError</failure></testcase><testcase classname="tests.test_metrics" name="test_parse_gsm8k_response" time="0.000"><failure message="NotImplementedError">def test_parse_gsm8k_response():
+        model_output = (
+            "Natalia sold 48/2 = 24 clips in May. "
+            "Natalia sold 48+24 = 72 clips altogether in April and May."
+        )
+&gt;       parsed_response = run_parse_gsm8k_response(model_output=model_output)
+
+tests/test_metrics.py:44: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_output = 'Natalia sold 48/2 = 24 clips in May. Natalia sold 48+24 = 72 clips altogether in April and May.'
+
+    def run_parse_gsm8k_response(
+        model_output: str,
+    ) -&gt; str | None:
+        """
+        Given a GSM8K model output, parse the model output into a predicted numeric answer by
+        taking the last number that occurs in the output.
+    
+        model_output: str
+            str with the model's output to a GSM8K example.
+    
+        Returns:
+            str with the predicted numeric answer if the model output can be parsed into a prediction,
+            else None.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:400: NotImplementedError</failure></testcase><testcase classname="tests.test_metrics" name="test_parse_gsm8k_response_unknown" time="0.000"><failure message="NotImplementedError">def test_parse_gsm8k_response_unknown():
+        model_output = (
+            "Natalia sold twenty-four clips in May. "
+            "Thus, Natalia sold seventy-two clips altogether in April and May."
+        )
+&gt;       parsed_response = run_parse_gsm8k_response(model_output=model_output)
+
+tests/test_metrics.py:53: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+model_output = 'Natalia sold twenty-four clips in May. Thus, Natalia sold seventy-two clips altogether in April and May.'
+
+    def run_parse_gsm8k_response(
+        model_output: str,
+    ) -&gt; str | None:
+        """
+        Given a GSM8K model output, parse the model output into a predicted numeric answer by
+        taking the last number that occurs in the output.
+    
+        model_output: str
+            str with the model's output to a GSM8K example.
+    
+        Returns:
+            str with the predicted numeric answer if the model output can be parsed into a prediction,
+            else None.
+        """
+&gt;       raise NotImplementedError
+E       NotImplementedError
+
+tests/adapters.py:400: NotImplementedError</failure></testcase><testcase classname="tests.test_sft" name="test_tokenize_prompt_and_output" time="0.001"><error message="failed on setup with &quot;huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/data/a5-alignment/models/Qwen2.5-Math-1.5B'. Use `repo_type` argument if needed.&quot;">path_or_repo_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B', filenames = ['tokenizer_config.json']
+cache_dir = '/home/c-cye/.cache/huggingface/hub', force_download = False, resume_download = None, proxies = None
+token = None, revision = None, local_files_only = False, subfolder = '', repo_type = None
+user_agent = 'transformers/4.51.3; python/3.12.10; session_id/a58e35d99283418092241fe35fccb8e2; torch/2.5.1'
+_raise_exceptions_for_gated_repo = False, _raise_exceptions_for_missing_entries = False
+_raise_exceptions_for_connection_errors = False, _commit_hash = None, deprecated_kwargs = {}
+use_auth_token = None, full_filenames = ['tokenizer_config.json'], existing_files = []
+filename = 'tokenizer_config.json'
+
+    def cached_files(
+        path_or_repo_id: Union[str, os.PathLike],
+        filenames: list[str],
+        cache_dir: Optional[Union[str, os.PathLike]] = None,
+        force_download: bool = False,
+        resume_download: Optional[bool] = None,
+        proxies: Optional[dict[str, str]] = None,
+        token: Optional[Union[bool, str]] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
+        subfolder: str = "",
+        repo_type: Optional[str] = None,
+        user_agent: Optional[Union[str, dict[str, str]]] = None,
+        _raise_exceptions_for_gated_repo: bool = True,
+        _raise_exceptions_for_missing_entries: bool = True,
+        _raise_exceptions_for_connection_errors: bool = True,
+        _commit_hash: Optional[str] = None,
+        **deprecated_kwargs,
+    ) -&gt; Optional[str]:
+        """
+        Tries to locate several files in a local folder and repo, downloads and cache them if necessary.
+    
+        Args:
+            path_or_repo_id (`str` or `os.PathLike`):
+                This can be either:
+                - a string, the *model id* of a model repo on huggingface.co.
+                - a path to a *directory* potentially containing the file.
+            filenames (`List[str]`):
+                The name of all the files to locate in `path_or_repo`.
+            cache_dir (`str` or `os.PathLike`, *optional*):
+                Path to a directory in which a downloaded pretrained model configuration should be cached if the standard
+                cache should not be used.
+            force_download (`bool`, *optional*, defaults to `False`):
+                Whether or not to force to (re-)download the configuration files and override the cached versions if they
+                exist.
+            resume_download:
+                Deprecated and ignored. All downloads are now resumed by default when possible.
+                Will be removed in v5 of Transformers.
+            proxies (`Dict[str, str]`, *optional*):
+                A dictionary of proxy servers to use by protocol or endpoint, e.g., `{'http': 'foo.bar:3128',
+                'http://hostname': 'foo.bar:4012'}.` The proxies are used on each request.
+            token (`str` or *bool*, *optional*):
+                The token to use as HTTP bearer authorization for remote files. If `True`, will use the token generated
+                when running `huggingface-cli login` (stored in `~/.huggingface`).
+            revision (`str`, *optional*, defaults to `"main"`):
+                The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
+                git-based system for storing models and other artifacts on huggingface.co, so `revision` can be any
+                identifier allowed by git.
+            local_files_only (`bool`, *optional*, defaults to `False`):
+                If `True`, will only try to load the tokenizer configuration from local files.
+            subfolder (`str`, *optional*, defaults to `""`):
+                In case the relevant files are located inside a subfolder of the model repo on huggingface.co, you can
+                specify the folder name here.
+            repo_type (`str`, *optional*):
+                Specify the repo type (useful when downloading from a space for instance).
+    
+        Private args:
+            _raise_exceptions_for_gated_repo (`bool`):
+                if False, do not raise an exception for gated repo error but return None.
+            _raise_exceptions_for_missing_entries (`bool`):
+                if False, do not raise an exception for missing entries but return None.
+            _raise_exceptions_for_connection_errors (`bool`):
+                if False, do not raise an exception for connection errors but return None.
+            _commit_hash (`str`, *optional*):
+                passed when we are chaining several calls to various files (e.g. when loading a tokenizer or
+                a pipeline). If files are cached for this commit hash, avoid calls to head and get from the cache.
+    
+        &lt;Tip&gt;
+    
+        Passing `token=True` is required when you want to use a private model.
+    
+        &lt;/Tip&gt;
+    
+        Returns:
+            `Optional[str]`: Returns the resolved file (to the cache folder if downloaded from a repo).
+    
+        Examples:
+    
+        ```python
+        # Download a model weight from the Hub and cache it.
+        model_weights_file = cached_file("google-bert/bert-base-uncased", "pytorch_model.bin")
+        ```
+        """
+        use_auth_token = deprecated_kwargs.pop("use_auth_token", None)
+        if use_auth_token is not None:
+            warnings.warn(
+                "The `use_auth_token` argument is deprecated and will be removed in v5 of Transformers. Please use `token` instead.",
+                FutureWarning,
+            )
+            if token is not None:
+                raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
+            token = use_auth_token
+    
+        if is_offline_mode() and not local_files_only:
+            logger.info("Offline mode: forcing local_files_only=True")
+            local_files_only = True
+        if subfolder is None:
+            subfolder = ""
+    
+        # Add folder to filenames
+        full_filenames = [os.path.join(subfolder, file) for file in filenames]
+    
+        path_or_repo_id = str(path_or_repo_id)
+        existing_files = []
+        for filename in full_filenames:
+            if os.path.isdir(path_or_repo_id):
+                resolved_file = os.path.join(path_or_repo_id, filename)
+                if not os.path.isfile(resolved_file):
+                    if _raise_exceptions_for_missing_entries and filename != os.path.join(subfolder, "config.json"):
+                        revision_ = "main" if revision is None else revision
+                        raise OSError(
+                            f"{path_or_repo_id} does not appear to have a file named {filename}. Checkout "
+                            f"'https://huggingface.co/{path_or_repo_id}/tree/{revision_}' for available files."
+                        )
+                    else:
+                        return None
+                existing_files.append(resolved_file)
+    
+        # All files exist
+        if len(existing_files) == len(full_filenames):
+            return existing_files
+    
+        if cache_dir is None:
+            cache_dir = TRANSFORMERS_CACHE
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+    
+        existing_files = []
+        file_counter = 0
+        if _commit_hash is not None and not force_download:
+            for filename in full_filenames:
+                # If the file is cached under that commit hash, we return it directly.
+                resolved_file = try_to_load_from_cache(
+                    path_or_repo_id, filename, cache_dir=cache_dir, revision=_commit_hash, repo_type=repo_type
+                )
+                if resolved_file is not None:
+                    if resolved_file is not _CACHED_NO_EXIST:
+                        file_counter += 1
+                        existing_files.append(resolved_file)
+                    elif not _raise_exceptions_for_missing_entries:
+                        file_counter += 1
+                    else:
+                        raise OSError(f"Could not locate {filename} inside {path_or_repo_id}.")
+    
+        # Either all the files were found, or some were _CACHED_NO_EXIST but we do not raise for missing entries
+        if file_counter == len(full_filenames):
+            return existing_files if len(existing_files) &gt; 0 else None
+    
+        user_agent = http_user_agent(user_agent)
+        # download the files if needed
+        try:
+            if len(full_filenames) == 1:
+                # This is slightly better for only 1 file
+&gt;               hf_hub_download(
+                    path_or_repo_id,
+                    filenames[0],
+                    subfolder=None if len(subfolder) == 0 else subfolder,
+                    repo_type=repo_type,
+                    revision=revision,
+                    cache_dir=cache_dir,
+                    user_agent=user_agent,
+                    force_download=force_download,
+                    proxies=proxies,
+                    resume_download=resume_download,
+                    token=token,
+                    local_files_only=local_files_only,
+                )
+
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:424: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:106: in _inner_fn
+    validate_repo_id(arg_value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B'
+
+    def validate_repo_id(repo_id: str) -&gt; None:
+        """Validate `repo_id` is valid.
+    
+        This is not meant to replace the proper validation made on the Hub but rather to
+        avoid local inconsistencies whenever possible (example: passing `repo_type` in the
+        `repo_id` is forbidden).
+    
+        Rules:
+        - Between 1 and 96 characters.
+        - Either "repo_name" or "namespace/repo_name"
+        - [a-zA-Z0-9] or "-", "_", "."
+        - "--" and ".." are forbidden
+    
+        Valid: `"foo"`, `"foo/bar"`, `"123"`, `"Foo-BAR_foo.bar123"`
+    
+        Not valid: `"datasets/foo/bar"`, `".repo_id"`, `"foo--bar"`, `"foo.git"`
+    
+        Example:
+        ```py
+        &gt;&gt;&gt; from huggingface_hub.utils import validate_repo_id
+        &gt;&gt;&gt; validate_repo_id(repo_id="valid_repo_id")
+        &gt;&gt;&gt; validate_repo_id(repo_id="other..repo..id")
+        huggingface_hub.utils._validators.HFValidationError: Cannot have -- or .. in repo_id: 'other..repo..id'.
+        ```
+    
+        Discussed in https://github.com/huggingface/huggingface_hub/issues/1008.
+        In moon-landing (internal repository):
+        - https://github.com/huggingface/moon-landing/blob/main/server/lib/Names.ts#L27
+        - https://github.com/huggingface/moon-landing/blob/main/server/views/components/NewRepoForm/NewRepoForm.svelte#L138
+        """
+        if not isinstance(repo_id, str):
+            # Typically, a Path is not a repo_id
+            raise HFValidationError(f"Repo id must be a string, not {type(repo_id)}: '{repo_id}'.")
+    
+        if repo_id.count("/") &gt; 1:
+&gt;           raise HFValidationError(
+                "Repo id must be in the form 'repo_name' or 'namespace/repo_name':"
+                f" '{repo_id}'. Use `repo_type` argument if needed."
+            )
+E           huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/data/a5-alignment/models/Qwen2.5-Math-1.5B'. Use `repo_type` argument if needed.
+
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:154: HFValidationError
+
+During handling of the above exception, another exception occurred:
+
+model_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B'
+
+    @pytest.fixture
+    def tokenizer(model_id):
+&gt;       return AutoTokenizer.from_pretrained(model_id)
+
+tests/conftest.py:218: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/transformers/models/auto/tokenization_auto.py:946: in from_pretrained
+    tokenizer_config = get_tokenizer_config(pretrained_model_name_or_path, **kwargs)
+.venv/lib/python3.12/site-packages/transformers/models/auto/tokenization_auto.py:778: in get_tokenizer_config
+    resolved_config_file = cached_file(
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:266: in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:471: in cached_files
+    _get_cache_file_to_return(path_or_repo_id, filename, cache_dir, revision) for filename in full_filenames
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:134: in _get_cache_file_to_return
+    resolved_file = try_to_load_from_cache(path_or_repo_id, full_filename, cache_dir=cache_dir, revision=revision)
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:106: in _inner_fn
+    validate_repo_id(arg_value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B'
+
+    def validate_repo_id(repo_id: str) -&gt; None:
+        """Validate `repo_id` is valid.
+    
+        This is not meant to replace the proper validation made on the Hub but rather to
+        avoid local inconsistencies whenever possible (example: passing `repo_type` in the
+        `repo_id` is forbidden).
+    
+        Rules:
+        - Between 1 and 96 characters.
+        - Either "repo_name" or "namespace/repo_name"
+        - [a-zA-Z0-9] or "-", "_", "."
+        - "--" and ".." are forbidden
+    
+        Valid: `"foo"`, `"foo/bar"`, `"123"`, `"Foo-BAR_foo.bar123"`
+    
+        Not valid: `"datasets/foo/bar"`, `".repo_id"`, `"foo--bar"`, `"foo.git"`
+    
+        Example:
+        ```py
+        &gt;&gt;&gt; from huggingface_hub.utils import validate_repo_id
+        &gt;&gt;&gt; validate_repo_id(repo_id="valid_repo_id")
+        &gt;&gt;&gt; validate_repo_id(repo_id="other..repo..id")
+        huggingface_hub.utils._validators.HFValidationError: Cannot have -- or .. in repo_id: 'other..repo..id'.
+        ```
+    
+        Discussed in https://github.com/huggingface/huggingface_hub/issues/1008.
+        In moon-landing (internal repository):
+        - https://github.com/huggingface/moon-landing/blob/main/server/lib/Names.ts#L27
+        - https://github.com/huggingface/moon-landing/blob/main/server/views/components/NewRepoForm/NewRepoForm.svelte#L138
+        """
+        if not isinstance(repo_id, str):
+            # Typically, a Path is not a repo_id
+            raise HFValidationError(f"Repo id must be a string, not {type(repo_id)}: '{repo_id}'.")
+    
+        if repo_id.count("/") &gt; 1:
+&gt;           raise HFValidationError(
+                "Repo id must be in the form 'repo_name' or 'namespace/repo_name':"
+                f" '{repo_id}'. Use `repo_type` argument if needed."
+            )
+E           huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/data/a5-alignment/models/Qwen2.5-Math-1.5B'. Use `repo_type` argument if needed.
+
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:154: HFValidationError</error></testcase><testcase classname="tests.test_sft" name="test_compute_entropy" time="0.002" /><testcase classname="tests.test_sft" name="test_get_response_log_probs" time="0.000"><error message="failed on setup with &quot;huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/data/a5-alignment/models/Qwen2.5-Math-1.5B'. Use `repo_type` argument if needed.&quot;">path_or_repo_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B', filenames = ['config.json']
+cache_dir = '/home/c-cye/.cache/huggingface/hub', force_download = False, resume_download = None, proxies = None
+token = None, revision = None, local_files_only = False, subfolder = '', repo_type = None
+user_agent = 'transformers/4.51.3; python/3.12.10; session_id/a58e35d99283418092241fe35fccb8e2; torch/2.5.1'
+_raise_exceptions_for_gated_repo = False, _raise_exceptions_for_missing_entries = False
+_raise_exceptions_for_connection_errors = False, _commit_hash = None, deprecated_kwargs = {}
+use_auth_token = None, full_filenames = ['config.json'], existing_files = [], filename = 'config.json'
+
+    def cached_files(
+        path_or_repo_id: Union[str, os.PathLike],
+        filenames: list[str],
+        cache_dir: Optional[Union[str, os.PathLike]] = None,
+        force_download: bool = False,
+        resume_download: Optional[bool] = None,
+        proxies: Optional[dict[str, str]] = None,
+        token: Optional[Union[bool, str]] = None,
+        revision: Optional[str] = None,
+        local_files_only: bool = False,
+        subfolder: str = "",
+        repo_type: Optional[str] = None,
+        user_agent: Optional[Union[str, dict[str, str]]] = None,
+        _raise_exceptions_for_gated_repo: bool = True,
+        _raise_exceptions_for_missing_entries: bool = True,
+        _raise_exceptions_for_connection_errors: bool = True,
+        _commit_hash: Optional[str] = None,
+        **deprecated_kwargs,
+    ) -&gt; Optional[str]:
+        """
+        Tries to locate several files in a local folder and repo, downloads and cache them if necessary.
+    
+        Args:
+            path_or_repo_id (`str` or `os.PathLike`):
+                This can be either:
+                - a string, the *model id* of a model repo on huggingface.co.
+                - a path to a *directory* potentially containing the file.
+            filenames (`List[str]`):
+                The name of all the files to locate in `path_or_repo`.
+            cache_dir (`str` or `os.PathLike`, *optional*):
+                Path to a directory in which a downloaded pretrained model configuration should be cached if the standard
+                cache should not be used.
+            force_download (`bool`, *optional*, defaults to `False`):
+                Whether or not to force to (re-)download the configuration files and override the cached versions if they
+                exist.
+            resume_download:
+                Deprecated and ignored. All downloads are now resumed by default when possible.
+                Will be removed in v5 of Transformers.
+            proxies (`Dict[str, str]`, *optional*):
+                A dictionary of proxy servers to use by protocol or endpoint, e.g., `{'http': 'foo.bar:3128',
+                'http://hostname': 'foo.bar:4012'}.` The proxies are used on each request.
+            token (`str` or *bool*, *optional*):
+                The token to use as HTTP bearer authorization for remote files. If `True`, will use the token generated
+                when running `huggingface-cli login` (stored in `~/.huggingface`).
+            revision (`str`, *optional*, defaults to `"main"`):
+                The specific model version to use. It can be a branch name, a tag name, or a commit id, since we use a
+                git-based system for storing models and other artifacts on huggingface.co, so `revision` can be any
+                identifier allowed by git.
+            local_files_only (`bool`, *optional*, defaults to `False`):
+                If `True`, will only try to load the tokenizer configuration from local files.
+            subfolder (`str`, *optional*, defaults to `""`):
+                In case the relevant files are located inside a subfolder of the model repo on huggingface.co, you can
+                specify the folder name here.
+            repo_type (`str`, *optional*):
+                Specify the repo type (useful when downloading from a space for instance).
+    
+        Private args:
+            _raise_exceptions_for_gated_repo (`bool`):
+                if False, do not raise an exception for gated repo error but return None.
+            _raise_exceptions_for_missing_entries (`bool`):
+                if False, do not raise an exception for missing entries but return None.
+            _raise_exceptions_for_connection_errors (`bool`):
+                if False, do not raise an exception for connection errors but return None.
+            _commit_hash (`str`, *optional*):
+                passed when we are chaining several calls to various files (e.g. when loading a tokenizer or
+                a pipeline). If files are cached for this commit hash, avoid calls to head and get from the cache.
+    
+        &lt;Tip&gt;
+    
+        Passing `token=True` is required when you want to use a private model.
+    
+        &lt;/Tip&gt;
+    
+        Returns:
+            `Optional[str]`: Returns the resolved file (to the cache folder if downloaded from a repo).
+    
+        Examples:
+    
+        ```python
+        # Download a model weight from the Hub and cache it.
+        model_weights_file = cached_file("google-bert/bert-base-uncased", "pytorch_model.bin")
+        ```
+        """
+        use_auth_token = deprecated_kwargs.pop("use_auth_token", None)
+        if use_auth_token is not None:
+            warnings.warn(
+                "The `use_auth_token` argument is deprecated and will be removed in v5 of Transformers. Please use `token` instead.",
+                FutureWarning,
+            )
+            if token is not None:
+                raise ValueError("`token` and `use_auth_token` are both specified. Please set only the argument `token`.")
+            token = use_auth_token
+    
+        if is_offline_mode() and not local_files_only:
+            logger.info("Offline mode: forcing local_files_only=True")
+            local_files_only = True
+        if subfolder is None:
+            subfolder = ""
+    
+        # Add folder to filenames
+        full_filenames = [os.path.join(subfolder, file) for file in filenames]
+    
+        path_or_repo_id = str(path_or_repo_id)
+        existing_files = []
+        for filename in full_filenames:
+            if os.path.isdir(path_or_repo_id):
+                resolved_file = os.path.join(path_or_repo_id, filename)
+                if not os.path.isfile(resolved_file):
+                    if _raise_exceptions_for_missing_entries and filename != os.path.join(subfolder, "config.json"):
+                        revision_ = "main" if revision is None else revision
+                        raise OSError(
+                            f"{path_or_repo_id} does not appear to have a file named {filename}. Checkout "
+                            f"'https://huggingface.co/{path_or_repo_id}/tree/{revision_}' for available files."
+                        )
+                    else:
+                        return None
+                existing_files.append(resolved_file)
+    
+        # All files exist
+        if len(existing_files) == len(full_filenames):
+            return existing_files
+    
+        if cache_dir is None:
+            cache_dir = TRANSFORMERS_CACHE
+        if isinstance(cache_dir, Path):
+            cache_dir = str(cache_dir)
+    
+        existing_files = []
+        file_counter = 0
+        if _commit_hash is not None and not force_download:
+            for filename in full_filenames:
+                # If the file is cached under that commit hash, we return it directly.
+                resolved_file = try_to_load_from_cache(
+                    path_or_repo_id, filename, cache_dir=cache_dir, revision=_commit_hash, repo_type=repo_type
+                )
+                if resolved_file is not None:
+                    if resolved_file is not _CACHED_NO_EXIST:
+                        file_counter += 1
+                        existing_files.append(resolved_file)
+                    elif not _raise_exceptions_for_missing_entries:
+                        file_counter += 1
+                    else:
+                        raise OSError(f"Could not locate {filename} inside {path_or_repo_id}.")
+    
+        # Either all the files were found, or some were _CACHED_NO_EXIST but we do not raise for missing entries
+        if file_counter == len(full_filenames):
+            return existing_files if len(existing_files) &gt; 0 else None
+    
+        user_agent = http_user_agent(user_agent)
+        # download the files if needed
+        try:
+            if len(full_filenames) == 1:
+                # This is slightly better for only 1 file
+&gt;               hf_hub_download(
+                    path_or_repo_id,
+                    filenames[0],
+                    subfolder=None if len(subfolder) == 0 else subfolder,
+                    repo_type=repo_type,
+                    revision=revision,
+                    cache_dir=cache_dir,
+                    user_agent=user_agent,
+                    force_download=force_download,
+                    proxies=proxies,
+                    resume_download=resume_download,
+                    token=token,
+                    local_files_only=local_files_only,
+                )
+
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:424: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:106: in _inner_fn
+    validate_repo_id(arg_value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B'
+
+    def validate_repo_id(repo_id: str) -&gt; None:
+        """Validate `repo_id` is valid.
+    
+        This is not meant to replace the proper validation made on the Hub but rather to
+        avoid local inconsistencies whenever possible (example: passing `repo_type` in the
+        `repo_id` is forbidden).
+    
+        Rules:
+        - Between 1 and 96 characters.
+        - Either "repo_name" or "namespace/repo_name"
+        - [a-zA-Z0-9] or "-", "_", "."
+        - "--" and ".." are forbidden
+    
+        Valid: `"foo"`, `"foo/bar"`, `"123"`, `"Foo-BAR_foo.bar123"`
+    
+        Not valid: `"datasets/foo/bar"`, `".repo_id"`, `"foo--bar"`, `"foo.git"`
+    
+        Example:
+        ```py
+        &gt;&gt;&gt; from huggingface_hub.utils import validate_repo_id
+        &gt;&gt;&gt; validate_repo_id(repo_id="valid_repo_id")
+        &gt;&gt;&gt; validate_repo_id(repo_id="other..repo..id")
+        huggingface_hub.utils._validators.HFValidationError: Cannot have -- or .. in repo_id: 'other..repo..id'.
+        ```
+    
+        Discussed in https://github.com/huggingface/huggingface_hub/issues/1008.
+        In moon-landing (internal repository):
+        - https://github.com/huggingface/moon-landing/blob/main/server/lib/Names.ts#L27
+        - https://github.com/huggingface/moon-landing/blob/main/server/views/components/NewRepoForm/NewRepoForm.svelte#L138
+        """
+        if not isinstance(repo_id, str):
+            # Typically, a Path is not a repo_id
+            raise HFValidationError(f"Repo id must be a string, not {type(repo_id)}: '{repo_id}'.")
+    
+        if repo_id.count("/") &gt; 1:
+&gt;           raise HFValidationError(
+                "Repo id must be in the form 'repo_name' or 'namespace/repo_name':"
+                f" '{repo_id}'. Use `repo_type` argument if needed."
+            )
+E           huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/data/a5-alignment/models/Qwen2.5-Math-1.5B'. Use `repo_type` argument if needed.
+
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:154: HFValidationError
+
+During handling of the above exception, another exception occurred:
+
+model_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B'
+
+    @pytest.fixture
+    def model(model_id):
+&gt;       return AutoModelForCausalLM.from_pretrained(model_id)
+
+tests/conftest.py:223: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+.venv/lib/python3.12/site-packages/transformers/models/auto/auto_factory.py:492: in from_pretrained
+    resolved_config_file = cached_file(
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:266: in cached_file
+    file = cached_files(path_or_repo_id=path_or_repo_id, filenames=[filename], **kwargs)
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:471: in cached_files
+    _get_cache_file_to_return(path_or_repo_id, filename, cache_dir, revision) for filename in full_filenames
+.venv/lib/python3.12/site-packages/transformers/utils/hub.py:134: in _get_cache_file_to_return
+    resolved_file = try_to_load_from_cache(path_or_repo_id, full_filename, cache_dir=cache_dir, revision=revision)
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:106: in _inner_fn
+    validate_repo_id(arg_value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo_id = '/data/a5-alignment/models/Qwen2.5-Math-1.5B'
+
+    def validate_repo_id(repo_id: str) -&gt; None:
+        """Validate `repo_id` is valid.
+    
+        This is not meant to replace the proper validation made on the Hub but rather to
+        avoid local inconsistencies whenever possible (example: passing `repo_type` in the
+        `repo_id` is forbidden).
+    
+        Rules:
+        - Between 1 and 96 characters.
+        - Either "repo_name" or "namespace/repo_name"
+        - [a-zA-Z0-9] or "-", "_", "."
+        - "--" and ".." are forbidden
+    
+        Valid: `"foo"`, `"foo/bar"`, `"123"`, `"Foo-BAR_foo.bar123"`
+    
+        Not valid: `"datasets/foo/bar"`, `".repo_id"`, `"foo--bar"`, `"foo.git"`
+    
+        Example:
+        ```py
+        &gt;&gt;&gt; from huggingface_hub.utils import validate_repo_id
+        &gt;&gt;&gt; validate_repo_id(repo_id="valid_repo_id")
+        &gt;&gt;&gt; validate_repo_id(repo_id="other..repo..id")
+        huggingface_hub.utils._validators.HFValidationError: Cannot have -- or .. in repo_id: 'other..repo..id'.
+        ```
+    
+        Discussed in https://github.com/huggingface/huggingface_hub/issues/1008.
+        In moon-landing (internal repository):
+        - https://github.com/huggingface/moon-landing/blob/main/server/lib/Names.ts#L27
+        - https://github.com/huggingface/moon-landing/blob/main/server/views/components/NewRepoForm/NewRepoForm.svelte#L138
+        """
+        if not isinstance(repo_id, str):
+            # Typically, a Path is not a repo_id
+            raise HFValidationError(f"Repo id must be a string, not {type(repo_id)}: '{repo_id}'.")
+    
+        if repo_id.count("/") &gt; 1:
+&gt;           raise HFValidationError(
+                "Repo id must be in the form 'repo_name' or 'namespace/repo_name':"
+                f" '{repo_id}'. Use `repo_type` argument if needed."
+            )
+E           huggingface_hub.errors.HFValidationError: Repo id must be in the form 'repo_name' or 'namespace/repo_name': '/data/a5-alignment/models/Qwen2.5-Math-1.5B'. Use `repo_type` argument if needed.
+
+.venv/lib/python3.12/site-packages/huggingface_hub/utils/_validators.py:154: HFValidationError</error></testcase><testcase classname="tests.test_sft" name="test_masked_normalize_dim0" time="0.002" /><testcase classname="tests.test_sft" name="test_masked_normalize_dim1" time="0.002" /><testcase classname="tests.test_sft" name="test_masked_normalize_dimlast" time="0.002" /><testcase classname="tests.test_sft" name="test_masked_normalize_dimNone" time="0.002" /><testcase classname="tests.test_sft" name="test_sft_microbatch_train_step" time="0.002" /><testcase classname="tests.test_sft" name="test_sft_microbatch_train_step_normalize" time="0.002" /><testcase classname="tests.test_sft" name="test_sft_microbatch_train_step_10_steps" time="0.003" /></testsuite></testsuites>

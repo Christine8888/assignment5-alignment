@@ -88,11 +88,16 @@ def full_train_step(prompts: List[str],
     """
     # tokenize prompts and responses --> input_ids, labels, response_mask
     tokenized_results = utils.tokenize_prompt_and_output(prompts, answers, tokenizer, device = device)
+    # tokenized results: batch_size x max_length
 
     # get log probs and entropy
     lp_dict = utils.get_response_log_probs(model, tokenized_results["input_ids"], tokenized_results["labels"], return_token_entropy = True)
     log_probs = lp_dict["log_probs"]
     token_entropy = lp_dict["token_entropy"]
+    token_entropy *= tokenized_results["response_mask"] # mask out padding tokens
+    response_lengths = torch.sum(tokenized_results["response_mask"], dim = -1, keepdim = True)
+    token_entropy /= response_lengths # normalize over tokens per response
+    per_token_entropy = token_entropy.mean() # average over responses
 
     # compute loss and do backward pass
     loss, metadata = utils.sft_microbatch_train_step(policy_log_probs = log_probs,
@@ -101,7 +106,7 @@ def full_train_step(prompts: List[str],
                                                         normalize_constant = 1.0,
                                                         do_backward = do_backward)
     
-    return loss.item(), token_entropy.mean().item()
+    return loss.item(), per_token_entropy.item()
 
 def evaluate_loss(prompts: List[str], answers: List[str], tokenizer: PreTrainedTokenizer, model: PreTrainedModel, minibatch_size: int):
     """
