@@ -422,11 +422,11 @@ def run_math_grpo(config: GRPOConfig,
             'n_epochs': 1,
             'n_unique': None, # always train on full SFT dataset
             'minibatch_size': 4,
-            'iter_batch_size': 1024,
+            'iter_batch_size': 512,
             'train_batch_size': 128,
             'learning_rate': 1e-4,
             'log_every_n': 10,
-            'eval_every_n': 20,
+            'eval_every_n': 100,
             'val_path': MATH_VAL_PATH,
             'train_path': MATH_TRAIN_PATH,
             'seed': 42,
@@ -444,7 +444,7 @@ def run_math_grpo(config: GRPOConfig,
         train_prompts = baseline.make_prompts(train_questions, prompt_path = prompt_path)
         
         train_step = 0
-        for i in range(2): # 2 iterations of expert iteration
+        for i in range(1): # 1 iteration of expert iteration
             # sample config['iter_batch_size'] items by index
             sampled_indices = np.random.choice(len(train_prompts), iter_config['iter_batch_size'], replace=False)
             print(f'Sampled {len(sampled_indices)} examples')
@@ -466,19 +466,24 @@ def run_math_grpo(config: GRPOConfig,
                                 end_eval = False, # only do full evaluation on last step
                                 iter = i)
             
+            # checkpoint model
+
             # load policy into vllm
             sft.load_policy_into_vllm_instance(model, vllm_model)
+    
+    if iter_warmup:
+        model.save_pretrained(f"./grpo_results/grpo_iter_warmup_model_{i}")
+    # reset optimizer
+    optimizer = torch.optim.AdamW(model.parameters(), 
+                                  lr = config.learning_rate, 
+                                  weight_decay = config.weight_decay, 
+                                  betas = config.betas)
     
     dataset = GRPODataset(train_path = train_path, 
                           val_path = val_path, 
                           prompt_path = prompt_path, 
                           load_function = baseline.load_MATH, 
                           make_prompts_function = baseline.make_prompts)
-    
-    print("Setting up GRPOTrainer")
-    # set learning rate for GRPO to 1e-5
-    for param_group in optimizer.param_groups:
-        param_group['lr'] = config.learning_rate
     
     trainer = GRPOTrainer(model = model, 
                           tokenizer = tokenizer, 

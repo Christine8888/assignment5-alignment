@@ -121,29 +121,17 @@ def submit_experiment(experiment_name: str, executor: submitit.AutoExecutor):
     elif experiment_name == "leaderboard":
         onpolicy_config = {"learning_rate": 2.5e-5, 
                           "run_name": "on_policy_leaderboard",
-                          "n_grpo_steps": 200,
+                          "n_grpo_steps": 100,
                           "loss_type": "grpo_clip",
                           "epochs_per_rollout_batch": 1,
                           "train_batch_size": 128,
                           "micro_batch_size": 2,
                           "length_normalize": False,
+                          "seed": 0,
                           "use_std_normalization": False}
         jobs = executor.submit(launch_from_config, onpolicy_config)
 
-        offpolicy_config = {"learning_rate": 2e-5, 
-                          "run_name": "off_policy_leaderboard",
-                          "loss_type": "grpo_clip",
-                          "epochs_per_rollout_batch": 2,
-                          "train_batch_size": 128,
-                          "n_grpo_steps": 200,
-                          "micro_batch_size": 2,
-                          "length_normalize": False,
-                          "use_std_normalization": False}
-        jobs = executor.submit(launch_from_config, offpolicy_config)
-        
-        print(f"Submitted leaderboard experiments")
-    elif experiment_name == "final_leaderboard":
-        onpolicy_config = {"learning_rate": 2.5e-5, 
+        onpolicy_config = {"learning_rate": 3e-5, 
                           "run_name": "on_policy_leaderboard",
                           "n_grpo_steps": 100,
                           "loss_type": "grpo_clip",
@@ -152,8 +140,35 @@ def submit_experiment(experiment_name: str, executor: submitit.AutoExecutor):
                           "micro_batch_size": 2,
                           "length_normalize": False,
                           "use_std_normalization": False}
+        jobs = executor.submit(launch_from_config, onpolicy_config)
+
+        # offpolicy_config = {"learning_rate": 2e-5, 
+        #                   "run_name": "off_policy_leaderboard",
+        #                   "loss_type": "grpo_clip",
+        #                   "epochs_per_rollout_batch": 2,
+        #                   "train_batch_size": 128,
+        #                   "n_grpo_steps": 200,
+        #                   "micro_batch_size": 2,
+        #                   "length_normalize": False,
+        #                   "use_std_normalization": False}
+        # jobs = executor.submit(launch_from_config, offpolicy_config)
+        
+        print(f"Submitted leaderboard experiments")
+    elif experiment_name == "warmup_leaderboard":
+        onpolicy_config = {"learning_rate": 4e-5, 
+                          "run_name": "on_policy_leaderboard",
+                          "n_grpo_steps": 150,
+                          "loss_type": "grpo_clip",
+                          "epochs_per_rollout_batch": 1,
+                          "train_batch_size": 128,
+                          "micro_batch_size": 2,
+                          "length_normalize": False,
+                          "use_std_normalization": False,
+                          "eval_interval": 20,
+                          "eval_batch_size": 5000}
         
         jobs = executor.submit(launch_from_config, onpolicy_config, iter_warmup = True) # use EI for warmup
+        
     else:
         raise ValueError(f"Unknown experiment: {experiment_name}")
     
