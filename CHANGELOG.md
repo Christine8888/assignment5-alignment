@@ -2,10 +2,19 @@
 
 All changes we make to the assignment code or PDF will be documented in this file.
 
+## [unreleased] - yyyy-mm-dd
+
+### Added
+
+### Changed
+
+### Fixed
+
 ## [1.0.2] - 2025-06-01
 
 ### Added
 - handout: added guidance on size of D_b in expert iteration experiment
+- code: add data for optional assignment
 
 ### Changed
 
