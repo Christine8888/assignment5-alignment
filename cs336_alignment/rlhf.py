@@ -68,13 +68,19 @@ def DPOLoss(lm: nn.Module, lm_ref: nn.Module, tokenizer: PreTrainedTokenizerBase
     # format w/ alpaca prompt
     win = ALPACA_PROMPT.format(instruction = prompt, response = response_chosen)
     lose = ALPACA_PROMPT.format(instruction = prompt, response = response_rejected)
-    # get logits for all tokens
-    w_tokens = tokenizer(win)['input_ids']
-    l_tokens = tokenizer(lose)['input_ids']
-    w_theta_lp = utils.get_response_log_probs(lm, w_tokens[:-1], w_tokens[1:])["log_probs"]
-    w_ref_lp = utils.get_response_log_probs(lm, w_tokens[:-1], w_tokens[1:])["log_probs"]
-    l_theta_lp = utils.get_response_log_probs(lm, l_tokens[:-1], l_tokens[1:])["log_probs"]
-    l_ref_lp = utils.get_response_log_probs(lm, l_tokens[:-1], l_tokens[1:])["log_probs"]
+    print(win)
+    print(lose)
+
+    # get logits for all tokens; must make it look batch_size x seq_len
+    w_tokens = torch.tensor(tokenizer(win)['input_ids'] + [tokenizer.eos_token_id]).unsqueeze(0)
+    l_tokens = torch.tensor(tokenizer(lose)['input_ids'] + [tokenizer.eos_token_id]).unsqueeze(0)
+
+    print(w_tokens.shape, l_tokens.shape)
+    
+    w_theta_lp = torch.sum(utils.get_response_log_probs(lm, w_tokens[:, :-1], w_tokens[:, 1:])["log_probs"])
+    w_ref_lp = torch.sum(utils.get_response_log_probs(lm_ref, w_tokens[:, :-1], w_tokens[:, 1:])["log_probs"])
+    l_theta_lp = torch.sum(utils.get_response_log_probs(lm, l_tokens[:, :-1], l_tokens[:, 1:])["log_probs"])
+    l_ref_lp = torch.sum(utils.get_response_log_probs(lm_ref, l_tokens[:, :-1], l_tokens[:, 1:])["log_probs"])
 
     h = beta * (w_theta_lp - w_ref_lp - l_theta_lp + l_ref_lp)
 

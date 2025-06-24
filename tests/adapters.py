@@ -10,7 +10,7 @@ from transformers import PreTrainedTokenizerBase
 import cs336_alignment.utils as utils
 import cs336_alignment.rl_utils as rl_utils
 import cs336_alignment.baseline as baseline
-from cs336_alignment.rlhf import ITDataset, iterate_batches
+from cs336_alignment.rlhf import ITDataset, iterate_batches, DPOLoss
 
 def run_tokenize_prompt_and_output(
     prompt_strs: list[str],
@@ -438,4 +438,10 @@ def run_compute_per_instance_dpo_loss(
     Returns:
         torch.Tensor with the DPO loss for this example.
     """
-    raise NotImplementedError
+    return DPOLoss(lm = lm,
+                            lm_ref = lm_ref,
+                            tokenizer = tokenizer,
+                            beta = beta,
+                            prompt = prompt,
+                            response_chosen = response_chosen,
+                            response_rejected = response_rejected)
