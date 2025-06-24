@@ -1,9 +1,28 @@
 from vllm import LLM, SamplingParams
 from cs336_alignment.drgrpo_grader import r1_zero_reward_fn
 import argparse
-from typing import Callable, List
+from typing import Callable, List, Any
 import json
 from cs336_alignment.info import *
+import os
+import pandas as pd
+
+def parse_mmlu_response(mmlu_example: dict[str, Any], model_output: str) -> str:
+    """
+    Parse the model output into a predicted option letter (i.e., 'A', 'B', 'C', or 'D').
+    """
+    sentence = "The correct answer is "
+    mmlu_letters = ["A", "B", "C", "D"]
+    # split on the sentence
+    answer = model_output.split(sentence)[1].strip()
+    answer = answer.split(".")[0].strip()
+    if answer.upper().strip() in mmlu_letters:
+        return answer.upper().strip()
+    elif answer.upper().strip() in mmlu_example["options"]:
+        return answer.upper().strip()
+    else:
+        return None
+
 
 def evaluate_vllm(
         vllm_model: LLM,
@@ -48,6 +67,43 @@ def load_MATH(path: str):
         data = [json.loads(line) for line in f]
     
     return [d["problem"] for d in data], [d["answer"] for d in data]
+
+def load_mmlu(path: str) -> List[dict[str, Any]]:
+    # find all .csv files in the directory
+    csv_files = [f for f in os.listdir(path) if f.endswith('.csv')]
+    # pandas dictionary: {subject: str, question: str, options: List[str], answer: str}
+    data = pd.DataFrame()
+    data.columns = ["subject", "question", "options", "answer"]
+    for file in csv_files:
+        # 0: questions, 1-4: options, 5: answer
+        subject = file.split('.csv')[0]
+        df = pd.read_csv(os.path.join(path, file))
+        df["subject"] = subject
+        df["options"] = df.iloc[:, 1:5].apply(lambda x: x.tolist(), axis=1)
+        df["answer"] = df.iloc[:, 5]
+        # keep only the subject, question, options, and answer columns
+        df = df[["subject", "question", "options", "answer"]]
+        data = pd.concat([data, df])
+    
+    # drop duplicates
+    data = data.drop_duplicates()
+    
+    # return as a list of dictionaries
+
+def make_mmlu_prompts(mmlu_examples: List[dict[str, Any]]) -> List[str]:
+    """
+    Make MMLU prompts from a list of MMLU examples.
+    """
+    with open(PROMPT_PATH / "mmlu.prompt", 'r') as f:
+        prompt_txt = f.read()
+    
+    prompts = []
+    for example in mmlu_examples:
+        prompts.append(prompt_txt.format(subject = example["subject"], 
+                                         question = example["question"], 
+                                         options = example["options"]))
+    
+    return prompts
 
 def make_prompts(questions: List[str], prompt_path = PROMPT_PATH):
     with open(prompt_path, 'r') as f:

@@ -9,6 +9,8 @@ from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizerBase
 import cs336_alignment.utils as utils
 import cs336_alignment.rl_utils as rl_utils
+import cs336_alignment.baseline as baseline
+from cs336_alignment.rlhf import ITDataset, iterate_batches
 
 def run_tokenize_prompt_and_output(
     prompt_strs: list[str],
@@ -331,7 +333,10 @@ def get_packed_sft_dataset(
         "input_ids" contains the token IDs for the language modeling inputs, and "labels" contains
         the token IDs for the language modeling labels.
     """
-    raise NotImplementedError
+    return ITDataset(tokenizer = tokenizer,
+                     dataset_path = dataset_path,
+                     seq_length = seq_length,
+                     shuffle = shuffle)
 
 
 def run_iterate_batches(
@@ -354,8 +359,9 @@ def run_iterate_batches(
     Returns:
         Iterable over batches, where each batch has size `batch_size`.
     """
-    raise NotImplementedError
-
+    return iterate_batches(dataset = dataset,
+                           batch_size = batch_size,
+                           shuffle = shuffle)
 
 def run_parse_mmlu_response(
     mmlu_example: dict[str, Any],
@@ -380,7 +386,7 @@ def run_parse_mmlu_response(
         str (one of "A", "B", "C", or "D") if the model output can be parsed into a prediction,
         else None.
     """
-    raise NotImplementedError
+    return baseline.parse_mmlu_response(mmlu_example, model_output)
 
 
 def run_parse_gsm8k_response(

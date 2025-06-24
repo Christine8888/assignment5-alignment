@@ -6,6 +6,7 @@ cs336_alignment/iter_results/
 cs336_alignment/sft_results/
 cs336_alignment/grpo_results/
 wandb/
+data/*.jsonl
 
 nav
 tags
