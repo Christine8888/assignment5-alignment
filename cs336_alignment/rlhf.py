@@ -2,6 +2,7 @@ from torch.utils.data import Dataset
 from torch.utils.data import DataLoader
 from transformers import PreTrainedTokenizerBase
 import torch.nn as nn
+import cs336_alignment.utils as utils
 import json
 import random
 import torch
@@ -64,6 +65,17 @@ def iterate_batches(dataset: Dataset, batch_size: int, shuffle: bool):
     return iter(dataloader)
 
 def DPOLoss(lm: nn.Module, lm_ref: nn.Module, tokenizer: PreTrainedTokenizerBase, beta: float, prompt: str, response_chosen: str, response_rejected: str):
+    # format w/ alpaca prompt
+    win = ALPACA_PROMPT.format(instruction = prompt, response = response_chosen)
+    lose = ALPACA_PROMPT.format(instruction = prompt, response = response_rejected)
     # get logits for all tokens
-    input_ids = 
-    lw = beta * torch.log()
+    w_tokens = tokenizer(win)['input_ids']
+    l_tokens = tokenizer(lose)['input_ids']
+    w_theta_lp = utils.get_response_log_probs(lm, w_tokens[:-1], w_tokens[1:])["log_probs"]
+    w_ref_lp = utils.get_response_log_probs(lm, w_tokens[:-1], w_tokens[1:])["log_probs"]
+    l_theta_lp = utils.get_response_log_probs(lm, l_tokens[:-1], l_tokens[1:])["log_probs"]
+    l_ref_lp = utils.get_response_log_probs(lm, l_tokens[:-1], l_tokens[1:])["log_probs"]
+
+    h = beta * (w_theta_lp - w_ref_lp - l_theta_lp + l_ref_lp)
+
+    return -nn.functional.logsigmoid(h)

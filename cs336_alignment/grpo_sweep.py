@@ -121,26 +121,25 @@ def submit_experiment(experiment_name: str, executor: submitit.AutoExecutor):
     elif experiment_name == "leaderboard":
         onpolicy_config = {"learning_rate": 2.5e-5, 
                           "run_name": "on_policy_leaderboard",
-                          "n_grpo_steps": 100,
+                          "n_grpo_steps": 150,
                           "loss_type": "grpo_clip",
                           "epochs_per_rollout_batch": 1,
                           "train_batch_size": 128,
                           "micro_batch_size": 2,
                           "length_normalize": False,
-                          "seed": 0,
-                          "use_std_normalization": False}
+                          "use_std_normalization": False} 
         jobs = executor.submit(launch_from_config, onpolicy_config)
 
-        onpolicy_config = {"learning_rate": 3e-5, 
-                          "run_name": "on_policy_leaderboard",
-                          "n_grpo_steps": 100,
-                          "loss_type": "grpo_clip",
-                          "epochs_per_rollout_batch": 1,
-                          "train_batch_size": 128,
-                          "micro_batch_size": 2,
-                          "length_normalize": False,
-                          "use_std_normalization": False}
-        jobs = executor.submit(launch_from_config, onpolicy_config)
+        # onpolicy_config = {"learning_rate": 3e-5, 
+        #                   "run_name": "on_policy_leaderboard",
+        #                   "n_grpo_steps": 100,
+        #                   "loss_type": "grpo_clip",
+        #                   "epochs_per_rollout_batch": 1,
+        #                   "train_batch_size": 128,
+        #                   "micro_batch_size": 2,
+        #                   "length_normalize": False,
+        #                   "use_std_normalization": False}
+        # jobs = executor.submit(launch_from_config, onpolicy_config)
 
         # offpolicy_config = {"learning_rate": 2e-5, 
         #                   "run_name": "off_policy_leaderboard",
