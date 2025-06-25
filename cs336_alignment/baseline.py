@@ -7,6 +7,22 @@ from cs336_alignment.info import *
 import os
 import pandas as pd
 
+def parse_gsm8k_response(model_output: str) -> str:
+    """
+    Parse the model output into a predicted numeric answer by
+    taking the last number that occurs in the output.
+    """
+    words = model_output.split(' ')
+    for word in reversed(words):
+        try:
+            return str(int(word))
+        except:
+            try:
+                return str(float(word))
+            except:
+                continue
+    return None
+
 def parse_mmlu_response(mmlu_example: dict[str, Any], model_output: str) -> str:
     """
     Parse the model output into a predicted option letter (i.e., 'A', 'B', 'C', or 'D').
